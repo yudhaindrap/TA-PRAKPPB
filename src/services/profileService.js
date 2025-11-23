@@ -110,7 +110,7 @@ export const uploadProfilePhoto = async (userId, file) => {
     const filePath = `${userId}/${fileName}`;
 
     // Upload ke Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('profile-photos')
       .upload(filePath, file, {
         cacheControl: '3600',

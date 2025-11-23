@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Leaf } from 'lucide-react';
 import { getUserProfile, createUserProfile } from '../services/profileService';
@@ -15,14 +15,14 @@ export const AuthProvider = ({ children }) => {
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Fungsi untuk load atau create profile
-  const loadUserProfile = async (userId) => {
+  const loadUserProfile = useCallback(async (userId, userEmail) => {
     setProfileLoading(true);
     try {
       let profile = await getUserProfile(userId);
       
       // Jika profil belum ada, buat profil baru
       if (!profile) {
-        const defaultName = session?.user?.email?.split('@')[0] || 'User';
+        const defaultName = userEmail?.split('@')[0] || 'User';
         profile = await createUserProfile(userId, {
           display_name: defaultName,
         });
@@ -35,14 +35,14 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setProfileLoading(false);
     }
-  };
+  }, []);
 
   // Fungsi untuk refresh profile
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = useCallback(async () => {
     if (session?.user?.id) {
-      await loadUserProfile(session.user.id);
+      await loadUserProfile(session.user.id, session.user.email);
     }
-  };
+  }, [session, loadUserProfile]);
 
   // 1. Cek Session saat pertama kali mount
   useEffect(() => {
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
         
         // Load user profile jika ada session
         if (session?.user?.id) {
-          await loadUserProfile(session.user.id);
+          await loadUserProfile(session.user.id, session.user.email);
         }
       } catch (error) {
         console.error("Error fetching session:", error);
@@ -70,14 +70,14 @@ export const AuthProvider = ({ children }) => {
       
       // Load user profile saat login
       if (newSession?.user?.id) {
-        await loadUserProfile(newSession.user.id);
+        await loadUserProfile(newSession.user.id, newSession.user.email);
       } else {
         setUserProfile(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadUserProfile]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
