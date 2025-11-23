@@ -7,64 +7,65 @@ const PlantDataContext = createContext();
 export const usePlantData = () => useContext(PlantDataContext);
 
 export const PlantDataProvider = ({ children }) => {
-  const { session, isAuthenticated } = useAuth();
+  // ✅ PERBAIKAN: Ambil SEMUA yang dibutuhkan DARI DALAM KOMPONEN
+  const { session, isAuthenticated, refreshTotalPlantsCount } = useAuth(); 
+  // Baris global hook yang salah sudah dihapus dari file
+
   const [plants, setPlants] = useState([]);
   const [activeTab, setActiveTab] = useState('home');
-  const [selectedPlant, setSelectedPlant] = useState(null); 
-  // const [dataVersion, setDataVersion] = useState(0); // Dihapus, tidak perlu untuk addPlant
+  const [selectedPlant, setSelectedPlant] = useState(null);
 
-  // Fungsi yang lebih baik untuk mengambil semua data tanaman
+  // Ambil semua data tanaman
   const fetchAllPlants = async () => {
     if (!isAuthenticated) {
       setPlants([]);
       return;
     }
+
     const { data, error } = await supabase
       .from('plants')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
-        console.error('Error fetching plants:', error);
-        return;
+      console.error('Error fetching plants:', error);
+      return;
     }
 
     setPlants(data || []);
   };
 
-  // Fungsi publik untuk memicu pengambilan data (hanya digunakan untuk Update/Delete)
+  // Memicu refresh data manual
   const refreshData = () => {
     fetchAllPlants();
   };
 
-
-  // 1. Ambil Data Tanaman saat mount atau login
+  // Ambil data saat mount atau login
   useEffect(() => {
     fetchAllPlants();
-  }, [isAuthenticated]); // Hanya bergantung pada status otentikasi
+  }, [isAuthenticated]);
 
-  
-  // 2. Tambah Data Tanaman (CREATE) - FUNGSI BARU YANG CEPAT
+  // Tambah data tanaman
   const addPlant = async (newPlantData) => {
     if (!isAuthenticated) return false;
 
     try {
-      // Pastikan ada user_id
       const plantWithUserId = { ...newPlantData, user_id: session.user.id };
 
       const { data, error } = await supabase
         .from('plants')
         .insert(plantWithUserId)
-        .select() // Meminta Supabase mengembalikan baris yang baru dibuat
+        .select()
         .single();
 
       if (error) throw error;
 
-      // ✅ PERBAIKAN UTAMA: Tambahkan data BARU SECARA LOKAL ke state, tanpa query ulang SEMUA
       if (data) {
-        setPlants(prevPlants => [data, ...prevPlants]);
+        setPlants(prev => [data, ...prev]);
+        // ✅ Pemanggilan refreshTotalPlantsCount sudah benar
+        refreshTotalPlantsCount(); 
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error adding plant:', error);
@@ -72,16 +73,23 @@ export const PlantDataProvider = ({ children }) => {
     }
   };
 
-  // 3. Hapus Data Tanaman (Delete)
+  // Hapus data tanaman
   const deletePlant = async (plantId) => {
     if (!isAuthenticated) return false;
+
     try {
-      const { error } = await supabase.from('plants').delete().eq('id', plantId);
+      const { error } = await supabase
+        .from('plants')
+        .delete()
+        .eq('id', plantId);
+
       if (error) throw error;
-      
-      // ✅ PERBAIKAN: Hapus secara lokal tanpa query ulang (opsional, tapi cepat)
-      setPlants(prevPlants => prevPlants.filter(p => p.id !== plantId));
-      setSelectedPlant(null); // Tutup detail
+
+      setPlants((prevPlants) => prevPlants.filter((p) => p.id !== plantId));
+      setSelectedPlant(null);
+      // ✅ Pemanggilan refreshTotalPlantsCount sudah benar
+      refreshTotalPlantsCount();
+
       return true;
     } catch (error) {
       console.error('Error deleting plant:', error);
@@ -89,31 +97,33 @@ export const PlantDataProvider = ({ children }) => {
     }
   };
 
-  // 4. Perbarui Data Tanaman (Update)
+  // Perbarui data tanaman
   const updatePlant = async (plantId, updates) => {
     if (!isAuthenticated || !plantId) {
-        console.error('Update failed: User not authenticated or plantId missing.');
-        return false;
+      console.error('Update failed: User not authenticated or plantId missing.');
+      return false;
     }
-      
+
     try {
-      const { data, error } = await supabase
+      const { data: updatedData, error } = await supabase
         .from('plants')
         .update(updates)
         .eq('id', plantId)
-        .select() // Dapatkan data yang diperbarui
+        .select()
         .single();
 
       if (error) throw error;
-      
-      // ✅ PERBAIKAN: Perbarui state secara lokal
-      setPlants(prevPlants => prevPlants.map(p => 
-        p.id === plantId ? { ...p, ...updates } : p
-      ));
 
-      // Perbarui selectedPlant
-      setSelectedPlant(prev => (prev ? { ...prev, ...updates } : null)); 
-      
+      setPlants((prevPlants) =>
+        prevPlants.map((p) =>
+          p.id === plantId ? updatedData : p 
+        )
+      );
+
+      setSelectedPlant((prev) =>
+        prev ? updatedData : null 
+      );
+
       return true;
     } catch (error) {
       console.error('Error in updatePlant:', error);
@@ -121,14 +131,13 @@ export const PlantDataProvider = ({ children }) => {
     }
   };
 
-
-  // Logic Navigasi
+  // Navigasi
   const handleDetail = (plant) => setSelectedPlant(plant);
   const handleBack = () => setSelectedPlant(null);
   const navigateTo = (tabName) => {
     setActiveTab(tabName);
-    setSelectedPlant(null); // Tutup detail saat pindah tab
-  }
+    setSelectedPlant(null);
+  };
 
   const value = {
     plants,
@@ -137,11 +146,15 @@ export const PlantDataProvider = ({ children }) => {
     handleDetail,
     handleBack,
     navigateTo,
-    addPlant, 
-    deletePlant, 
-    updatePlant, 
-    refreshData, // Tetap sediakan (untuk jaga-jaga)
+    addPlant,
+    deletePlant,
+    updatePlant,
+    refreshData,
   };
 
-  return <PlantDataContext.Provider value={value}>{children}</PlantDataContext.Provider>;
+  return (
+    <PlantDataContext.Provider value={value}>
+      {children}
+    </PlantDataContext.Provider>
+  );
 };

@@ -224,7 +224,7 @@ const ProfilePage = ({ user, onLogout }) => {
             <span className="flex items-center gap-3 font-medium">
               <Heart size={20} className="text-red-500" /> Versi Aplikasi
             </span>
-            <span className="text-xs bg-gray-100 px-2 py-1 rounded">v1.0.0 PWA</span>
+            <span className="text-xs bg-gray-100 px-2 py-1 rounded">v1.0.0</span>
           </div>
 
           <button
