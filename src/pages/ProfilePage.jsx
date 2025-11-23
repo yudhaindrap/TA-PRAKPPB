@@ -21,7 +21,7 @@ const ProfilePage = ({ user, onLogout }) => {
 
   // Handle file selection
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files[0];
     if (!file) return;
 
     // Validasi ukuran
@@ -136,6 +136,7 @@ const ProfilePage = ({ user, onLogout }) => {
             accept="image/jpeg,image/png,image/jpg"
             onChange={handleFileChange}
             className="hidden"
+            aria-label="Upload foto profil"
           />
         </motion.div>
         

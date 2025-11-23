@@ -19,6 +19,7 @@ export const getUserProfile = async (userId) => {
 
     if (error) {
       // Jika profil belum ada, bukan error
+      // PGRST116 adalah error code Supabase untuk "no rows found" atau "single() returned no data"
       if (error.code === 'PGRST116') {
         return null;
       }

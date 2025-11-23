@@ -61,7 +61,13 @@ BEGIN
   INSERT INTO public.user_profiles (user_id, display_name)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1))
+    COALESCE(
+      NEW.raw_user_meta_data->>'display_name',
+      CASE 
+        WHEN NEW.email IS NOT NULL AND NEW.email != '' THEN split_part(NEW.email, '@', 1)
+        ELSE 'User'
+      END
+    )
   );
   RETURN NEW;
 END;

@@ -70,7 +70,11 @@ export const AuthProvider = ({ children }) => {
       
       // Load user profile saat login
       if (newSession?.user?.id) {
-        await loadUserProfile(newSession.user.id, newSession.user.email);
+        try {
+          await loadUserProfile(newSession.user.id, newSession.user.email);
+        } catch (error) {
+          console.error("Error loading profile on auth change:", error);
+        }
       } else {
         setUserProfile(null);
       }
