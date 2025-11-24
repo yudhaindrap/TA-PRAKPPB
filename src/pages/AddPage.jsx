@@ -158,15 +158,20 @@ const AddPage = ({ userId, onSaveSuccess }) => {
 
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Lokasi</label>
-            <select 
-              value={location} onChange={(e) => setLocation(e.target.value)}
-              className="w-full border border-gray-200 bg-white rounded-xl p-4 focus:ring-2 focus:ring-green-500 outline-none"
-            >
-              <option>Indoor</option>
-              <option>Outdoor</option>
-              <option>Kamar Tidur</option>
-              <option>Kantor</option>
-            </select>
+              <select 
+                value={location} 
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full border border-gray-200 bg-white rounded-xl p-4 focus:ring-2 focus:ring-green-500 outline-none"
+              >
+                <option>Indoor</option>
+                <option>Outdoor</option>
+                <option>Kamar Tidur</option>
+                <option>Ruang Tamu</option>
+                <option>Kantor / Workspace</option>
+                <option>Dapur</option>
+                <option>Teras Rumah</option>
+                <option>Area Belakang Rumah</option>
+              </select>
           </div>
         </div>
 

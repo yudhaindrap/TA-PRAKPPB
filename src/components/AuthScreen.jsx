@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Leaf, Loader2 } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabaseClient'; // <-- PERBAIKAN JALUR IMPORT
 
 const AuthScreen = () => {
   const [email, setEmail] = useState('');
@@ -24,20 +24,24 @@ const AuthScreen = () => {
     let error;
 
     if (isSignUp) {
-      // 1. Pendaftaran
+      // 1. Pendaftaran (Sign Up)
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
       error = signUpError;
 
       if (!signUpError) {
-        // Pendaftaran berhasil, kirim pesan sukses dan pindah ke mode Login
-        setMessage('Pendaftaran berhasil! Cek email Anda untuk konfirmasi sebelum masuk.');
+        // Logika Sign Out paksa: User didaftarkan tetapi sesi langsung diakhiri 
+        // agar user kembali ke halaman Login (SignUp Berhasil).
+        await supabase.auth.signOut(); 
+
+        setMessage('Pendaftaran berhasil! Silakan masuk menggunakan email dan password Anda.');
         resetFormStates(false); // Pindah ke mode Login
         setLoading(false);
         return;
       }
     } else {
-      // 2. Login
+      // 2. Login (Sign In)
       ({ error } = await supabase.auth.signInWithPassword({ email, password }));
+      // Jika login berhasil, AuthContext akan otomatis mendeteksi sesi.
     }
 
     // Penanganan Error

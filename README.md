@@ -1,16 +1,124 @@
-# React + Vite
+# Yudha Indra Praja
+# 21120123140143
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# 🌿 **PlantPal — Sahabat Tanaman Digital Anda**
 
-Currently, two official plugins are available:
+PlantPal adalah aplikasi web progresif (PWA) yang dirancang untuk membantu Anda memantau dan merawat koleksi tanaman dengan mudah. Dengan fitur manajemen real-time dan sistem pengingat penyiraman otomatis, PlantPal memastikan tanaman Anda selalu terhidrasi dan sehat.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## ✨ **Fitur Utama (Features)**
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+PlantPal bukan hanya daftar tanaman, tetapi *asisten perawatan tanaman pribadi* dengan fitur penjadwalan canggih:
 
-## Expanding the ESLint configuration
+- **PWA Ready** — Dapat diinstal di smartphone atau desktop tanpa App Store.
+- **Manajemen Koleksi** — Tambah, edit, dan hapus detail tanaman.
+- **Sistem Alarm Penyiraman Harian** — Atur jam penyiraman untuk tiap tanaman.
+- **Notifikasi Pintar (Browser/Push)** — Memunculkan notifikasi saat jadwal tiba.
+- **Status Air Otomatis** — Tanaman berubah menjadi *BUTUH AIR* otomatis sesuai jadwal.
+- **Optimistic UI Updates** — Aksi CRUD tampil instan tanpa menunggu server.
+- **Autentikasi Aman** — Menggunakan Supabase Auth.
+- **Manajemen Profil** — Update nama, avatar, dan bio.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🛠️ **Teknologi yang Digunakan (Tech Stack)**
+
+Berikut adalah teknologi modern yang digunakan untuk membangun PlantPal:
+
+| **Kategori**   | **Teknologi**                | **Deskripsi**                                                   |
+| -------------- | ---------------------------- | --------------------------------------------------------------- |
+| **Frontend**   | React (Hooks & Context)      | Kerangka utama. Context untuk state global (Auth & Plant Data). |
+| **Styling**    | Tailwind CSS & Framer Motion | UI modern, animasi halus & responsif.                           |
+| **Backend**    | Supabase                     | PostgreSQL, Auth, Storage. BaaS lengkap.                        |
+| **Arsitektur** | PWA (Progressive Web App)    | Instalasi aplikasi + notifikasi ala native.                     |
+
+---
+
+## ⚙️ **Struktur Data & State Management**
+
+PlantPal menggunakan dua Context terpisah namun saling terhubung:
+
+---
+
+### **1. AuthContext**
+
+Mengelola identitas pengguna dan status sesi:
+
+- `session`
+- `profile`
+- `userVisual`
+- `totalPlants`
+- `handleLogout()`
+- `refreshProfile()`
+
+---
+
+### **2. PlantDataContext**
+
+Mengelola seluruh koleksi tanaman:
+
+- `plants`
+- CRUD optimistik → `addPlant`, `updatePlant`, `deletePlant`
+- Navigasi halaman detail tanaman
+- **Logika alarm penyiraman otomatis**
+  - Menggunakan `setInterval` untuk membaca `watering_schedule`
+  - Memicu **Notifikasi Browser**
+  - Memperbarui status `needsWater` secara otomatis
+
+---
+
+## 🗄️ **Skema Database (Supabase)**
+
+Anda memerlukan 2 tabel utama:
+
+### **profiles**
+
+| Kolom        | Tipe Data               | Fungsi             |
+| ------------ | ----------------------- | ------------------ |
+| `id`         | UUID (FK ke auth.users) | Identitas user     |
+| `full_name`  | text                    | Nama tampilan      |
+| `avatar_url` | text                    | Foto profil        |
+| `bio`        | text                    | Deskripsi pengguna |
+
+---
+
+### **plants**
+
+| Kolom               | Tipe Data  | Fungsi                 |
+| ------------------- | ---------- | ---------------------- |
+| `user_id`           | UUID       | Owner tanaman          |
+| `name`              | text       | Nama tanaman           |
+| `species`           | text       | Spesies tanaman        |
+| `location`          | text       | Lokasi tanaman         |
+| `needsWater`        | boolean    | Status penyiraman      |
+| `last_watered_at`   | timestamp  | Waktu terakhir disiram |
+| `watering_schedule` | JSON/Array | List jam penyiraman    |
+
+---
+
+## 🚀 **Persiapan & Instalasi (Getting Started)**
+
+### **1. Setup Supabase**
+
+- Buat project baru.
+- Buat tabel **profiles** dan **plants** sesuai skema.
+- Tambahkan env:
+
+```env
+REACT_APP_SUPABASE_URL="URL_SUPABASE_ANDA"
+REACT_APP_SUPABASE_ANON_KEY="ANON_SUPABASE_KEY"
+```
+
+### **2. Instalasi Proyek Lokal**
+```
+npm install
+npm run dev
+```
+Aplikasi berjalan di:
+```
+http://localhost:5173
+```
+
+##  Vercell 
+https://ta-prakppb.vercel.app/

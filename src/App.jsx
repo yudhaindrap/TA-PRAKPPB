@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react'; // <-- Import Suspense dan lazy
 
 // Contexts
 import { AuthProvider, useAuth, LoadingScreen } from './context/AuthContext';
 import { PlantDataProvider } from './context/PlantDataContext';
 
-// Components & Screens
-import AuthScreen from './components/AuthScreen';
-import AppLayout from './components/AppLayout';
+// Components & Screens - Ubah import ke lazy
+// import AuthScreen from './components/AuthScreen';  <-- Hapus
+// import AppLayout from './components/AppLayout';    <-- Hapus
+
+const AuthScreen = lazy(() => import('./components/AuthScreen'));
+const AppLayout = lazy(() => import('./components/AppLayout'));
 
 // Main Application Component
 const AppContent = () => {
@@ -16,19 +19,22 @@ const AppContent = () => {
     return <LoadingScreen />;
   }
 
-  // Routing Sederhana
-  if (!isAuthenticated) {
-    return <AuthScreen />;
-  }
-
   return (
-    // Memastikan tata letak responsif tetap di tengah layar
-    <div className="bg-gray-100 min-h-screen flex justify-center items-center">
-      {/* Jika sudah login, berikan akses data dan tampilkan layout utama */}
-      <PlantDataProvider>
-        <AppLayout />
-      </PlantDataProvider>
-    </div>
+    // Bungkus semua conditional rendering dengan Suspense
+    <Suspense fallback={<LoadingScreen />}>
+      {/* Routing Sederhana */}
+      {isAuthenticated ? (
+        // Memastikan tata letak responsif tetap di tengah layar
+        <div className="bg-gray-100 min-h-screen flex justify-center items-center">
+          {/* Jika sudah login, berikan akses data dan tampilkan layout utama */}
+          <PlantDataProvider>
+            <AppLayout />
+          </PlantDataProvider>
+        </div>
+      ) : (
+        <AuthScreen />
+      )}
+    </Suspense>
   );
 };
 
