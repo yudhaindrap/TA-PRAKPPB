@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Edit2, Check, X, Camera, FileText, Loader2, MessageSquare } from 'lucide-react'; 
+import { LogOut, Edit2, Check, X, Camera, FileText, Loader2, Heart, MessageSquare } from 'lucide-react'; 
 import { supabase } from '../supabaseClient'; 
 import { useAuth } from '../context/AuthContext'; 
 
@@ -231,7 +231,7 @@ const ProfilePage = ({ user, onLogout }) => {
       </div>
 
       {/* STATISTIK CARD (Mengapung) */}
-      <div className="px-6 -mt-10 relative z-[50]">
+      <div className="px-6 -mt-10 relative z-10">
         <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-6">
           <div className="flex justify-around text-center divide-x divide-gray-100">
             <div>
@@ -273,7 +273,7 @@ const ProfilePage = ({ user, onLogout }) => {
         <div className="space-y-3">
           
           <InfoCard
-            icon={<FileText size={20} className="text-red-500" />} // Mengganti ikon di InfoCard ini
+            icon={<Heart size={20} className="text-red-500" />}
             title="Versi Aplikasi"
             value="v1.0.0"
           />
