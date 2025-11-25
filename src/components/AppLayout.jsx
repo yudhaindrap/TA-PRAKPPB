@@ -73,21 +73,20 @@ const AppLayout = () => {
           </AnimatePresence>
         </main>
 
-{/* BOTTOM NAVIGATION (Hanya Mobile) */}
-        <div className="bg-white border-t border-gray-100 px-6 py-3 pb-6 flex justify-between items-center z-50"> {/* UBAH z-40 MENJADI z-50 */}
-          <NavBtn icon={Home} label="Beranda" active={activeTab === 'home'} onClick={() => navigateTo('home')} />
-          <NavBtn icon={Leaf} label="Koleksi" active={activeTab === 'collection'} onClick={() => navigateTo('collection')} />
-          
-          {/* Floating Add Button */}
-          <div className="relative -top-8">
-            <button 
-              onClick={() => navigateTo('add')}
-              // Tambahkan z-index yang lebih tinggi, misalnya z-50, pada tombol itu sendiri (meskipun penampung z-50 sudah cukup, ini bisa jadi pelapis)
-              className={`p-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 ${activeTab === 'add' ? 'bg-green-700 rotate-45 ring-4 ring-green-100' : 'bg-green-600 text-white'} **relative z-50**`}
-            >
-              <PlusCircle size={32} color="white" />
-            </button>
-          </div>
+        {/* BOTTOM NAVIGATION (Hanya Mobile) */}
+        <div className="bg-white border-t border-gray-100 px-6 py-3 pb-6 flex justify-between items-center z-40">
+          <NavBtn icon={Home} label="Beranda" active={activeTab === 'home'} onClick={() => navigateTo('home')} />
+          <NavBtn icon={Leaf} label="Koleksi" active={activeTab === 'collection'} onClick={() => navigateTo('collection')} />
+          
+          {/* Floating Add Button */}
+          <div className="relative -top-8">
+            <button 
+              onClick={() => navigateTo('add')}
+              className={`p-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 ${activeTab === 'add' ? 'bg-green-700 rotate-45 ring-4 ring-green-100' : 'bg-green-600 text-white'}`}
+            >
+              <PlusCircle size={32} color="white" />
+            </button>
+          </div>
 
           <NavBtn icon={UserIcon} label="Profil" active={activeTab === 'profile'} onClick={() => navigateTo('profile')} />
         </div>
@@ -138,7 +137,7 @@ const AppLayout = () => {
         </header>
         
         {/* AREA KONTEN UTAMA (Desktop) */}
-        <main className="overflow-y-auto scrollbar-hide md:py-4 pr-8">
+        <main className="overflow-y-auto scrollbar-hide md:py-8 pr-8">
           <AnimatePresence mode="wait">
              {renderPage()}
           </AnimatePresence>

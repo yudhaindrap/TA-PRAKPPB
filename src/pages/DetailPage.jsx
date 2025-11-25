@@ -234,7 +234,7 @@ const DetailPage = ({ plant, onBack }) => {
            if (Notification.permission === "granted") {
              new Notification(`Waktunya menyiram ${plant.name}!`, {
                body: `Jadwal penyiraman pukul ${currentTime} telah tiba.`,
-               icon: '/icon-leaf.png' // Ganti dengan icon app anda
+               icon: '/icon.png' // Ganti dengan icon app anda
              });
            }
         }
