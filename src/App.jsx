@@ -25,7 +25,7 @@ const AppContent = () => {
       {/* Routing Sederhana */}
       {isAuthenticated ? (
         // Memastikan tata letak responsif tetap di tengah layar
-        <div className="bg-gray-100 min-h-screen flex justify-center items-center">
+        <div className="bg-gray-100 min-h-screen flex justify-center items-start md:items-center">
           {/* Jika sudah login, berikan akses data dan tampilkan layout utama */}
           <PlantDataProvider>
             <AppLayout />

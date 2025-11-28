@@ -36,4 +36,10 @@ export default defineConfig({
       }
     })
   ],
+  // >>> PERBAIKAN DITAMBAHKAN DI SINI <<<
+  server: {
+    host: '0.0.0.0', // Mengikat server ke semua antarmuka jaringan
+    port: 5173      // Port default Vite. Pastikan ini port yang Anda gunakan.
+  }
+  // >>> AKHIR PERBAIKAN <<<
 })

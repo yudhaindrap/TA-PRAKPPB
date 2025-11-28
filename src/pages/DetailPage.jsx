@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Trash2, Droplet, CheckCircle, Clock, Loader2, Edit, X, Link, UploadCloud, Plus, Bell } from 'lucide-react';
+import { ChevronLeft, Trash2, Droplet, CheckCircle, Clock, Loader2, Edit, X, Plus, Bell } from 'lucide-react';
 import { usePlantData } from '../context/PlantDataContext';
 
 // 1. Komponen Modal Fullscreen (Tetap sama)
@@ -30,7 +30,7 @@ const formatTimestamp = (timestamp) => {
   });
 };
 
-// 2. Modifikasi Edit Plant Modal (Tambah Input Jadwal) ---
+// 2. Edit Plant Modal (Dengan Input Jadwal)
 const EditPlantModal = ({ plant, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: plant.name || '',
@@ -72,7 +72,6 @@ const EditPlantModal = ({ plant, onClose, onSave }) => {
     }));
   };
 
-  // (Handler Image sama seperti sebelumnya, disingkat agar fokus ke fitur baru) ...
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -111,7 +110,7 @@ const EditPlantModal = ({ plant, onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Input Nama, Spesies, Lokasi (Tetap Sama) */}
+          {/* Input Nama, Spesies, Lokasi */}
           <div>
             <label className="block text-sm font-medium text-gray-700">Nama</label>
             <input name="name" value={formData.name} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
@@ -130,7 +129,7 @@ const EditPlantModal = ({ plant, onClose, onSave }) => {
              </select>
           </div>
 
-          {/* FITUR BARU: JADWAL PENYIRAMAN */}
+          {/* JADWAL PENYIRAMAN */}
           <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
             <label className="block text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
                <Clock size={16}/> Jadwal Alarm Penyiraman
@@ -164,12 +163,10 @@ const EditPlantModal = ({ plant, onClose, onSave }) => {
               ))}
             </div>
           </div>
-          {/* ====================================== */}
 
-          {/* Bagian Gambar (Sederhana untuk mempersingkat kode tampilan) */}
+          {/* Bagian Gambar */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Gambar URL / Upload</label>
-             {/* Toggle logic same as original... */}
              <div className="flex gap-2 mb-2">
                 <button type="button" onClick={() => handleImageInputTypeChange('url')} className={`text-xs px-2 py-1 rounded ${imageInputType==='url' ? 'bg-green-100 text-green-700' : 'bg-gray-100'}`}>URL</button>
                 <button type="button" onClick={() => handleImageInputTypeChange('file')} className={`text-xs px-2 py-1 rounded ${imageInputType==='file' ? 'bg-green-100 text-green-700' : 'bg-gray-100'}`}>Upload</button>
@@ -193,7 +190,7 @@ const EditPlantModal = ({ plant, onClose, onSave }) => {
   );
 };
 
-// 3. Main Detail Page dengan Logic Alarm
+// 3. Main Detail Page
 const DetailPage = ({ plant, onBack }) => {
   const { deletePlant, updatePlant, handleBack } = usePlantData();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -203,48 +200,10 @@ const DetailPage = ({ plant, onBack }) => {
   const [message, setMessage] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
 
-  // Minta izin notifikasi browser saat halaman dibuka
-  useEffect(() => {
-    if ("Notification" in window) {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  // LOGIC ALARM / PENJADWALAN
-  useEffect(() => {
-    // Fungsi pengecekan waktu
-    const checkSchedule = () => {
-      if (!plant.watering_schedule || plant.watering_schedule.length === 0) return;
-
-      const now = new Date();
-      const currentTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'); // Format HH:MM
-      
-      // Cek apakah waktu sekarang ada di jadwal
-      if (plant.watering_schedule.includes(currentTime)) {
-        // Cek apakah SUDAH disiram dalam 1 jam terakhir (untuk mencegah spam notifikasi di menit yang sama)
-        const lastWatered = new Date(plant.last_watered_at);
-        const isWateredToday = lastWatered.toDateString() === now.toDateString();
-        
-        // Logic: Jika belum disiram hari ini ATAU status masih false, maka picu alarm
-        if (!plant.needsWater) {
-           // Trigger Update State ke 'Butuh Air'
-           updatePlant(plant.id, { needsWater: true });
-           
-           // Trigger Browser Notification
-           if (Notification.permission === "granted") {
-             new Notification(`Waktunya menyiram ${plant.name}!`, {
-               body: `Jadwal penyiraman pukul ${currentTime} telah tiba.`,
-               icon: '/icon.png' // Ganti dengan icon app anda
-             });
-           }
-        }
-      }
-    };
-
-    // Jalankan pengecekan setiap 30 detik
-    const timer = setInterval(checkSchedule, 30000);
-    return () => clearInterval(timer);
-  }, [plant, updatePlant]);
+  // --- CATATAN PENTING ---
+  // Logika Alarm (useEffect Interval & Notification) telah dihapus dari sini 
+  // dan dipindahkan ke 'PlantDataContext.js' agar berjalan Global.
+  // -----------------------
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -257,10 +216,8 @@ const DetailPage = ({ plant, onBack }) => {
     if (isUpdating) return;
     setIsUpdating(true);
     
-    // Jika sedang "Butuh Air" (kuning), user klik -> jadi "Sudah Disiram" (hijau)
-    // Jika sedang "Sudah Disiram" (hijau), user klik -> jadi "Butuh Air" (manual override)
+    // Toggle Logic
     const newWaterStatus = !plant.needsWater; 
-    
     const updates = { needsWater: newWaterStatus };
     
     // Jika disiram (jadi false/hijau), update timestamp

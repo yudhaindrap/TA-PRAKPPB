@@ -8,152 +8,160 @@ export const usePlantData = () => useContext(PlantDataContext);
 
 export const PlantDataProvider = ({ children }) => {
   const { session, isAuthenticated, refreshTotalPlantsCount } = useAuth();
-
   const [plants, setPlants] = useState([]);
   const [activeTab, setActiveTab] = useState('home');
   const [selectedPlant, setSelectedPlant] = useState(null);
 
-  // Fetch Data
-  const fetchAllPlants = async () => {
-    if (!isAuthenticated) {
-      setPlants([]);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('plants')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching plants:', error);
-    } else {
-      setPlants(data || []);
-    }
-  };
-
+  // --- LOGIC ALARM GLOBAL DIMULAI DI SINI ---
+  
+  // 1. Meminta Izin Notifikasi saat aplikasi pertama dimuat
   useEffect(() => {
-    fetchAllPlants();
-  }, [isAuthenticated]);
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }, []);
 
-  const refreshData = () => {
-    fetchAllPlants();
+  // 2. Interval Pengecekan Waktu (Berjalan setiap 10 detik)
+  useEffect(() => {
+    if (!isAuthenticated || plants.length === 0) return;
+
+    const checkSchedules = () => {
+      const now = new Date();
+      // Format Jam: HH:MM
+      const currentTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+      // Format Tanggal Hari Ini: YYYY-MM-DD
+      const todayDate = now.toISOString().split('T')[0];
+
+      plants.forEach(plant => {
+        if (!plant.watering_schedule || plant.watering_schedule.length === 0) return;
+
+        // Cek apakah Jam Sekarang ada di Jadwal
+        if (plant.watering_schedule.includes(currentTime)) {
+          
+          // KUNCI LOGIKA HARIAN:
+          // Kita buat Key unik kombinasi ID Tanaman + Jam + Tanggal Hari Ini
+          // Contoh Key: "notif-123-08:00-2023-11-28"
+          const notifKey = `notif-${plant.id}-${currentTime}-${todayDate}`;
+          const alreadyNotifiedToday = localStorage.getItem(notifKey);
+
+          // Jika BELUM ada catatan notifikasi hari ini untuk jam ini
+          if (!alreadyNotifiedToday) {
+            
+            // 1. Trigger Notifikasi Browser
+            if (Notification.permission === "granted") {
+              // Service Worker Registration check (opsional untuk PWA, fallback ke new Notification)
+              if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                 navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(`Waktunya menyiram ${plant.name}!`, {
+                      body: `Sekarang jam ${currentTime}, ayo cek tanamanmu! 🌱`,
+                      icon: plant.image_url || '/icon.png',
+                      vibrate: [200, 100, 200]
+                    });
+                 });
+              } else {
+                 new Notification(`Waktunya menyiram ${plant.name}!`, {
+                   body: `Sekarang jam ${currentTime}, ayo cek tanamanmu! 🌱`,
+                   icon: '/icon.png'
+                 });
+              }
+            }
+
+            // 2. Update Status Tanaman jadi "Butuh Air" (Kuning)
+            // Kita paksa update walaupun statusnya masih 'false', agar user sadar
+            updatePlant(plant.id, { needsWater: true });
+
+            // 3. Simpan key ke LocalStorage agar tidak spamming di menit yang sama
+            localStorage.setItem(notifKey, 'true');
+            
+            // Bersihkan localStorage lama (opsional, untuk hemat memori)
+            // Hapus key kemarin
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayDate = yesterday.toISOString().split('T')[0];
+            localStorage.removeItem(`notif-${plant.id}-${currentTime}-${yesterdayDate}`);
+          }
+        }
+      });
+    };
+
+    // Jalankan interval setiap 10 detik agar lebih presisi menangkap menit
+    const intervalId = setInterval(checkSchedules, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [plants, isAuthenticated]); 
+  // Dependency 'plants' penting agar data jadwal selalu update
+
+  // --- LOGIC ALARM SELESAI ---
+
+  // ... (Sisa kode fetchAllPlants, addPlant, deletePlant, updatePlant sama seperti sebelumnya) ...
+  
+  const fetchAllPlants = async () => {
+    if (!isAuthenticated) { setPlants([]); return; }
+    const { data, error } = await supabase.from('plants').select('*').order('created_at', { ascending: false });
+    if (error) console.error(error); else setPlants(data || []);
   };
 
-  // ADD PLANT
+  useEffect(() => { fetchAllPlants(); }, [isAuthenticated]);
+
+  const refreshData = () => { fetchAllPlants(); };
+
   const addPlant = async (newPlantData) => {
     if (!isAuthenticated) return false;
-
     try {
       const plantWithUserId = { ...newPlantData, user_id: session.user.id };
-
-      // Insert ke DB
-      const { data, error } = await supabase
-        .from('plants')
-        .insert(plantWithUserId)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.from('plants').insert(plantWithUserId).select().single();
       if (error) throw error;
-
       if (data) {
-        setPlants(prev => [data, ...prev]); // Update lokal
-        refreshTotalPlantsCount(); // Update counter
+        setPlants(prev => [data, ...prev]);
+        refreshTotalPlantsCount();
       }
       return true;
     } catch (error) {
-      console.error('Error adding plant:', error);
-      return false;
+      console.error(error); return false;
     }
   };
 
-  // DELETE PLANT (OPTIMISTIC) 
-  // "Hapus dulu di layar, baru lapor ke server"
   const deletePlant = async (plantId) => {
     if (!isAuthenticated) return false;
-
-    // 1. Update UI SECARA INSTAN
-    const previousPlants = [...plants]; // Simpan backup jika gagal
+    const previousPlants = [...plants];
     setPlants((prev) => prev.filter((p) => p.id !== plantId));
-    setSelectedPlant(null); // Tutup detail page langsung
-
+    setSelectedPlant(null);
     try {
-      // 2. Kirim request ke Server
-      const { error } = await supabase
-        .from('plants')
-        .delete()
-        .eq('id', plantId);
-
+      const { error } = await supabase.from('plants').delete().eq('id', plantId);
       if (error) throw error;
-
-      // Sukses di server, update counter
       refreshTotalPlantsCount();
       return true;
-
     } catch (error) {
-      console.error('Error deleting plant:', error);
-      // Jika gagal, kembalikan data lama (Rollback)
       setPlants(previousPlants);
-      alert("Gagal menghapus tanaman. Periksa koneksi internet.");
       return false;
     }
   };
 
-  // UPDATE PLANT (OPTIMISTIC)
-  // "Ubah dulu di layar, baru lapor ke server"
   const updatePlant = async (plantId, updates) => {
     if (!isAuthenticated || !plantId) return false;
+    const previousPlants = [...plants];
+    const previousSelected = selectedPlant;
 
-    // 1. Update UI SECARA INSTAN
-    const previousPlants = [...plants]; // Backup
-    const previousSelected = selectedPlant; // Backup
-
-    // Update list di Home
-    setPlants((prev) =>
-      prev.map((p) => (p.id === plantId ? { ...p, ...updates } : p))
-    );
-
-    // Update tampilan Detail Page (PENTING AGAR TIDAK TERASA LAMBAT DI DETAIL)
+    setPlants((prev) => prev.map((p) => (p.id === plantId ? { ...p, ...updates } : p)));
     setSelectedPlant((prev) => (prev && prev.id === plantId ? { ...prev, ...updates } : prev));
 
     try {
-      // 2. Kirim request ke Server
-      const { error } = await supabase
-        .from('plants')
-        .update(updates)
-        .eq('id', plantId);
-
+      const { error } = await supabase.from('plants').update(updates).eq('id', plantId);
       if (error) throw error;
       return true;
-
     } catch (error) {
-      console.error('Error updating plant:', error);
-      // Rollback jika gagal
       setPlants(previousPlants);
       setSelectedPlant(previousSelected);
       return false;
     }
   };
 
-  // Navigasi
   const handleDetail = (plant) => setSelectedPlant(plant);
   const handleBack = () => setSelectedPlant(null);
-  const navigateTo = (tabName) => {
-    setActiveTab(tabName);
-    setSelectedPlant(null);
-  };
+  const navigateTo = (tabName) => { setActiveTab(tabName); setSelectedPlant(null); };
 
   const value = {
-    plants,
-    activeTab,
-    selectedPlant,
-    handleDetail,
-    handleBack,
-    navigateTo,
-    addPlant,
-    deletePlant,
-    updatePlant,
-    refreshData,
+    plants, activeTab, selectedPlant, handleDetail, handleBack, navigateTo, addPlant, deletePlant, updatePlant, refreshData,
   };
 
   return (
