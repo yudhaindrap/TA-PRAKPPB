@@ -122,10 +122,14 @@ const EditPlantModal = ({ plant, onClose, onSave }) => {
           <div>
              <label className="block text-sm font-medium text-gray-700">Lokasi</label>
              <select name="location" value={formData.location} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white">
-                <option value="">Pilih Lokasi</option>
                 <option value="Indoor">Indoor</option>
-                <option value="Teras">Teras</option>
-                <option value="Kebun">Kebun</option>
+                <option value="Outdoor">Outdoor</option>
+                <option value="Kamar Tidur">Kamar Tidur</option>
+                <option value="Ruang Tamu">Ruang Tamu</option>
+                <option value="Kantor">Kantor / Workspace</option>
+                <option value="Dapur">Dapur</option>
+                <option value="Teras Rumah">Teras Rumah</option>
+                <option value="Area Belakang Rumah">Area Belakang Rumah</option>
              </select>
           </div>
 

@@ -60,7 +60,7 @@ const AppLayout = () => {
 
   return (
     // CONTAINER UTAMA - Responsif
-    <div className="w-full h-full min-h-screen bg-gray-100 flex justify-center items-center md:items-start md:py-8">
+    <div className="w-full h-full min-h-screen bg-gray-100 flex justify-center items-start md:py-8">
       
       {/* 1. TATA LETAK MOBILE (Fixed Width/Height) */}
       <div className="w-full max-w-md h-[100dvh] bg-gray-50 relative shadow-2xl overflow-hidden flex flex-col md:hidden">
